@@ -1,0 +1,15 @@
+version: '3.7'
+
+services:
+  board-db:
+    image: postgres:15.1-alpine
+    container_name: postgres-container
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_DB: board_ja
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - ./db/pg/data:/var/lib/postgres/data
+      - ./db/pg/scripts:/docker-entrypoint-initdb.d
