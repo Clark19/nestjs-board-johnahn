@@ -9,16 +9,9 @@ import { Board } from './board.entity';
 export class BoardsService {
   constructor(private readonly boardRepository: BoardRepository) {}
 
-  async createBoard(data: CreateBoardDto): Promise<Board> {
-    const board = this.boardRepository.create({
-      ...data,
-      status: BoardStatus.PUBLIC,
-    });
-    // const board = await this.boardRepository.save({
-    //   ...data,
-    //   status: BoardStatus.PUBLIC,
-    // });
-    await this.boardRepository.save(board);
+  async createBoard(createBoardDto: CreateBoardDto): Promise<Board> {
+    const board = await this.boardRepository.createBoard(createBoardDto);
+
     return board;
   }
 
@@ -32,16 +25,20 @@ export class BoardsService {
     return found;
   }
 
-  // updateBoardStatus(id: string, status: BoardStatus): Board {
-  //   const board = this.getBoardById(id);
-  //   board.status = status;
-  //   return board;
-  // }
+  async updateBoardStatus(id: number, status: BoardStatus): Promise<Board> {
+    const board = await this.getBoardById(id);
+    board.status = status;
+    await this.boardRepository.save(board);
+    return board;
+  }
 
-  // deleteBoard(id: string): boolean {
-  //   const found = this.getBoardById(id);
-  //   this.boards = this.boardRepository.filter((board) => board.id !== found.id);
-  //   if (found) return true;
-  //   return false;
-  // }
+  async deleteBoard(id: number): Promise<boolean> {
+    // this.boards = this.boardRepository.filter((board) => board.id !== found.id);
+    // .indexof() & .splice(index, 1) 두개 연합해서 지우는거랑 차이는 ?
+    const isDeleted = await this.boardRepository.delete(id);
+    console.log('isDeleted:', isDeleted);
+    if (isDeleted.affected === 0)
+      throw new NotFoundException(`Can't find Board with id: ${id}`);
+    return isDeleted.affected > 0;
+  }
 }
