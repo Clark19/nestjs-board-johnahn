@@ -1,22 +1,29 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { BoardStatus } from './board-status.enum';
 import { CreateBoardDto } from './dto/create-board.dto';
-import { v1 as uuid } from 'uuid';
 import { BoardRepository } from './board.repository';
 import { Board } from './board.entity';
+import { User } from 'src/auth/entities/user.entity';
 
 @Injectable()
 export class BoardsService {
   constructor(private readonly boardRepository: BoardRepository) {}
 
-  async createBoard(createBoardDto: CreateBoardDto): Promise<Board> {
-    const board = await this.boardRepository.createBoard(createBoardDto);
+  async createBoard(
+    createBoardDto: CreateBoardDto,
+    user: User,
+  ): Promise<Board> {
+    const board = await this.boardRepository.createBoard(createBoardDto, user);
 
     return board;
   }
 
-  getAllBoards(): Promise<Board[]> {
-    return this.boardRepository.find(); //{ order: { id: 'DESC' } }
+  async getAllBoards(user: User): Promise<Board[]> {
+    // return this.boardRepository.find(); //{ order: { id: 'DESC' } }
+    return this.boardRepository
+      .createQueryBuilder('board')
+      .where('board.userId = :userId', { userId: user.id })
+      .getMany();
   }
 
   async getBoardById(id: number): Promise<Board> {
@@ -32,10 +39,10 @@ export class BoardsService {
     return board;
   }
 
-  async deleteBoard(id: number): Promise<boolean> {
+  async deleteBoard(id: number, user: User): Promise<boolean> {
     // this.boards = this.boardRepository.filter((board) => board.id !== found.id);
     // .indexof() & .splice(index, 1) 두개 연합해서 지우는거랑 차이는 ?
-    const isDeleted = await this.boardRepository.delete(id);
+    const isDeleted = await this.boardRepository.delete({ id, user });
     console.log('isDeleted:', isDeleted);
     if (isDeleted.affected === 0)
       throw new NotFoundException(`Can't find Board with id: ${id}`);
